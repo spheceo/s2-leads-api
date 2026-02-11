@@ -36,6 +36,7 @@ type LeadOutputItem struct {
 }
 
 type LeadsOutput struct {
+	Total int `json:"total"`
 	Data []LeadOutputItem `json:"data"`
 }
 
@@ -93,6 +94,7 @@ func GetLeads(lat, lon, business_type, country_code string, limit int64) (LeadsO
 	}
 
 	body := LeadsOutput{
+		Total: len(input.Data),
 		Data: make([]LeadOutputItem, 0, len(input.Data)),
 	}
 
