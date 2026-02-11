@@ -1,11 +1,9 @@
-package handler
+package lib
 
 import (
 	"fmt"
 	"strings"
 	"sync"
-
-	"s2-leads-api/lib"
 
 	"github.com/gofiber/fiber/v3"
 	unkey "github.com/unkeyed/sdks/api/go/v2"
@@ -20,7 +18,7 @@ var (
 
 func getUnkeyClient() (*unkey.Unkey, error) {
 	unkeyInitOnce.Do(func() {
-		rootKey, err := lib.GetEnv("UNKEY_ROOT_KEY")
+		rootKey, err := GetEnv("UNKEY_ROOT_KEY")
 		if err != nil {
 			unkeyInitErr = fmt.Errorf("failed to load UNKEY_ROOT_KEY: %w", err)
 			return
@@ -34,7 +32,7 @@ func getUnkeyClient() (*unkey.Unkey, error) {
 	return unkeyClient, unkeyInitErr
 }
 
-func unkeyAuth(c fiber.Ctx) error {
+func UnkeyAuth(c fiber.Ctx) error {
 	client, err := getUnkeyClient()
 	if err != nil {
 		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{

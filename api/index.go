@@ -83,7 +83,7 @@ func buildApp() *fiber.App {
 
 	// Define Routes
 	app.Get("/", index)
-	app.Post("/search", unkeyAuth, search)
+	app.Post("/search", lib.UnkeyAuth, search)
 	app.Get("/favicon.ico", favicon)
 
 	return app
