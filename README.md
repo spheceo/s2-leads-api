@@ -7,6 +7,9 @@ Google Maps lead scraper built in Go.
 ### `POST /search`
 Fetches lead data for a business type in a city/country.
 
+#### Headers
+- `Authorization` (required): `Bearer <UNKEY_API_KEY>`
+
 #### Request body
 ```json
 {
@@ -30,7 +33,9 @@ Create a `.env` file in the project root with:
 ```env
 RAPIDAPI_KEY=your_rapidapi_key
 PROXY_URL=http://username:password@host:port
+UNKEY_ROOT_KEY=your_unkey_root_key
 ```
 
 - `RAPIDAPI_KEY` (required): API key used for the RapidAPI Google Maps data endpoint.
 - `PROXY_URL` (required): Proxy URL used by outbound requests (for both geocoding and leads fetch).
+- `UNKEY_ROOT_KEY` (required): Root key used to verify incoming API keys for protected routes.
