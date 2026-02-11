@@ -58,7 +58,7 @@ func search(c fiber.Ctx) error {
 		})
 	}
 
-	// Fetch leads
+	// Fetch leads & return
 	leads, leadsStatus, err := lib.GetLeads(
 		coordinates[0].Lat, coordinates[0].Lon, body.BusinessType, body.CountryCode, body.Limit,
 	)
