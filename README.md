@@ -4,6 +4,9 @@ Google Maps lead scraper built in Go.
 
 ## Routes
 
+### `GET /getIP`
+Returns the current outbound IP and geo details from the configured proxy.
+
 ### `POST /search`
 Fetches lead data for a business type in a city/country.
 

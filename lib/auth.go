@@ -1,44 +1,24 @@
 package lib
 
 import (
-	"fmt"
 	"strings"
-	"sync"
 
 	"github.com/gofiber/fiber/v3"
 	unkey "github.com/unkeyed/sdks/api/go/v2"
 	"github.com/unkeyed/sdks/api/go/v2/models/components"
 )
 
-var (
-	unkeyClient   *unkey.Unkey
-	unkeyInitErr  error
-	unkeyInitOnce sync.Once
-)
-
-func getUnkeyClient() (*unkey.Unkey, error) {
-	unkeyInitOnce.Do(func() {
-		rootKey, err := GetEnv("UNKEY_ROOT_KEY")
-		if err != nil {
-			unkeyInitErr = fmt.Errorf("failed to load UNKEY_ROOT_KEY: %w", err)
-			return
-		}
-
-		unkeyClient = unkey.New(
-			unkey.WithSecurity(rootKey),
-		)
-	})
-
-	return unkeyClient, unkeyInitErr
-}
-
 func UnkeyAuth(c fiber.Ctx) error {
-	client, err := getUnkeyClient()
+	rootKey, err := GetEnv("UNKEY_ROOT_KEY")
 	if err != nil {
 		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
 			"error": "verification service unavailable",
 		})
 	}
+
+	client := unkey.New(
+		unkey.WithSecurity(rootKey),
+	)
 
 	apiKey := extractAPIKey(c.Get("Authorization"))
 	if apiKey == "" {

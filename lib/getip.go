@@ -7,38 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"sync"
 	"time"
-)
-
-type ProxyIdentity struct {
-	IP      string `json:"ip"`
-	City    string `json:"city"`
-	Region  string `json:"region"`
-	Country string `json:"country"`
-	Org     string `json:"org"`
-}
-
-type ipifyResponse struct {
-	IP string `json:"ip"`
-}
-
-type ipWhoIsResponse struct {
-	Success    bool   `json:"success"`
-	Message    string `json:"message"`
-	IP         string `json:"ip"`
-	City       string `json:"city"`
-	Region     string `json:"region"`
-	Country    string `json:"country"`
-	Connection struct {
-		Org string `json:"org"`
-	} `json:"connection"`
-}
-
-var (
-	proxyClientMu  sync.RWMutex
-	cachedProxyURL string
-	cachedClient   *http.Client
 )
 
 func newProxyHTTPClient() (*http.Client, error) {
@@ -49,14 +18,6 @@ func newProxyHTTPClient() (*http.Client, error) {
 	if rest, ok := strings.CutPrefix(proxyURL, "https://"); ok {
 		proxyURL = "http://" + rest
 	}
-
-	proxyClientMu.RLock()
-	if cachedClient != nil && cachedProxyURL == proxyURL {
-		client := cachedClient
-		proxyClientMu.RUnlock()
-		return client, nil
-	}
-	proxyClientMu.RUnlock()
 
 	transport := &http.Transport{
 		MaxIdleConns:        100,
@@ -75,11 +36,6 @@ func newProxyHTTPClient() (*http.Client, error) {
 		Timeout:   25 * time.Second,
 		Transport: transport,
 	}
-
-	proxyClientMu.Lock()
-	cachedProxyURL = proxyURL
-	cachedClient = httpClient
-	proxyClientMu.Unlock()
 
 	return httpClient, nil
 }

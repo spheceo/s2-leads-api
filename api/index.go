@@ -10,12 +10,6 @@ import (
 	"github.com/gofiber/fiber/v3/middleware/cors"
 )
 
-var (
-	validate    = validator.New()
-	fiberApp    = buildApp()
-	httpHandler = http.HandlerFunc(adaptor.FiberApp(fiberApp))
-)
-
 type SearchInput struct {
 	BusinessType string `json:"business_type" validate:"required,min=2"`
 	City         string `json:"city" validate:"required,min=2"`
@@ -30,16 +24,17 @@ func index(c fiber.Ctx) error {
 }
 
 func search(c fiber.Ctx) error {
-	// Accepting body input & validating
 	var body SearchInput
 
+	// Parse JSON from the request body into the SearchInput struct.
 	if err := c.Bind().Body(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{
 			"error": "invalid JSON body",
 		})
 	}
 
-	if err := validate.Struct(body); err != nil {
+	// Validate required fields and constraints from struct tags.
+	if err := validator.New().Struct(body); err != nil {
 		return c.Status(422).JSON(fiber.Map{
 			"error": err.Error(),
 		})
@@ -71,11 +66,23 @@ func search(c fiber.Ctx) error {
 	return c.Status(leadsStatus).JSON(leads)
 }
 
+func test(c fiber.Ctx) error {
+	body, status, err := lib.GetIP()
+	if err != nil {
+		return c.Status(status).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.Status(status).JSON(body)
+}
+
 func favicon(c fiber.Ctx) error {
 	return c.SendFile("./public/favicon.ico")
 }
 
-func buildApp() *fiber.App {
+// HTTP Handler which Vercel looks for
+func Handler(w http.ResponseWriter, r *http.Request) {
 	app := fiber.New()
 
 	// CORS Setup
@@ -84,12 +91,9 @@ func buildApp() *fiber.App {
 	// Define Routes
 	app.Get("/", index)
 	app.Post("/search", lib.UnkeyAuth, search)
+	app.Get("/getIP", test)
 	app.Get("/favicon.ico", favicon)
 
-	return app
-}
-
-// HTTP Handler which Vercel looks for
-func Handler(w http.ResponseWriter, r *http.Request) {
-	httpHandler.ServeHTTP(w, r)
+	// Serve HTTP
+	http.HandlerFunc(adaptor.FiberApp(app)).ServeHTTP(w, r)
 }

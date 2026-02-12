@@ -10,36 +10,6 @@ import (
 	"strings"
 )
 
-type LeadsUpstreamInput struct {
-	Data []struct {
-		Name        string   `json:"name"`
-		PhoneNumber string   `json:"phone_number"`
-		FullAddress string   `json:"full_address"`
-		City        string   `json:"city"`
-		Rating      float64  `json:"rating"`
-		ReviewCount int64    `json:"review_count"`
-		Website     string   `json:"website"`
-		PlaceLink   string   `json:"place_link"`
-	} `json:"data"`
-}
-
-type LeadOutputItem struct {
-	Name        string   `json:"name"`
-	PhoneNumber string   `json:"phone_number"`
-	Address     string   `json:"address"`
-	City        string   `json:"city"`
-	Rating      float64  `json:"rating"`
-	Reviews     int64    `json:"reviews"`
-	Website     string   `json:"website"`
-	Link        string   `json:"link"`
-	LeadScore   float64  `json:"lead_score"`
-}
-
-type LeadsOutput struct {
-	Total int `json:"total"`
-	Data []LeadOutputItem `json:"data"`
-}
-
 func GetLeads(lat, lon, business_type, country_code string, limit int64) (LeadsOutput, int, error) {
 	// Get RapidAPI Key
 	rapidapi, err := GetEnv("RAPIDAPI_KEY")
@@ -53,7 +23,7 @@ func GetLeads(lat, lon, business_type, country_code string, limit int64) (LeadsO
 	}
 
 	endpoint := fmt.Sprintf(
-		"https://maps-data.p.rapidapi.com/searchmaps.php?query=%s&limit=%d&country=%s&lang=en&offset=0&zoom=13&lat=%s&lng=%s",
+		"https://maps-data.p.rapidapi.com/searchmaps.php?query=%s&limit=%d&country=%s&lang=en&offset=0&zoom=10&lat=%s&lng=%s",
 		url.QueryEscape(business_type), limit, country_code, lat, lon,
 	)
 
@@ -95,7 +65,7 @@ func GetLeads(lat, lon, business_type, country_code string, limit int64) (LeadsO
 
 	body := LeadsOutput{
 		Total: len(input.Data),
-		Data: make([]LeadOutputItem, 0, len(input.Data)),
+		Data:  make([]LeadOutputItem, 0, len(input.Data)),
 	}
 
 	for _, item := range input.Data {

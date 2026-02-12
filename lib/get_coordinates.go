@@ -7,45 +7,9 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"sync"
-	"time"
-)
-
-type SearchInput struct {
-	BusinessType string `json:"business_type" validate:"required,min=2"`
-	City         string `json:"city" validate:"required,min=2"`
-	CountryCode  string `json:"country_code" validate:"required,min=2"`
-	Limit        int64  `json:"limit" validate:"required,gte=1,lte=500"`
-}
-
-type CoordinateUpstreamInput []struct {
-	Lat string `json:"lat"`
-	Lon string `json:"lon"`
-}
-
-type cachedCoordinates struct {
-	Data      CoordinateUpstreamInput
-	ExpiresAt time.Time
-}
-
-var (
-	coordinatesCacheMu sync.RWMutex
-	coordinatesCache   = make(map[string]cachedCoordinates)
-	coordinatesTTL     = 6 * time.Hour
 )
 
 func GetCoordinates(city, country_code string) (CoordinateUpstreamInput, int, error) {
-	cacheKey := strings.ToLower(strings.TrimSpace(city)) + "|" + strings.ToLower(strings.TrimSpace(country_code))
-	now := time.Now()
-
-	coordinatesCacheMu.RLock()
-	cached, ok := coordinatesCache[cacheKey]
-	coordinatesCacheMu.RUnlock()
-	if ok && now.Before(cached.ExpiresAt) {
-		clone := append(CoordinateUpstreamInput(nil), cached.Data...)
-		return clone, http.StatusOK, nil
-	}
-
 	httpClient, err := newProxyHTTPClient()
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
@@ -93,13 +57,6 @@ func GetCoordinates(city, country_code string) (CoordinateUpstreamInput, int, er
 	if err := json.Unmarshal(respBody, &input); err != nil {
 		return nil, status, fmt.Errorf("invalid json: %w", err)
 	}
-
-	coordinatesCacheMu.Lock()
-	coordinatesCache[cacheKey] = cachedCoordinates{
-		Data:      append(CoordinateUpstreamInput(nil), input...),
-		ExpiresAt: now.Add(coordinatesTTL),
-	}
-	coordinatesCacheMu.Unlock()
 
 	return input, status, nil
 }
