@@ -42,17 +42,19 @@ func search(c fiber.Ctx) error {
 
 	// Fetch coordinates
 	coordinates, coordStatus, err := lib.GetCoordinates(body.City, body.CountryCode)
+
 	if err != nil {
 		return c.Status(coordStatus).JSON(fiber.Map{
-			"error": err.Error(),
+			"failed to fetch coordinates": err.Error(),
 		})
 	}
+
 	if len(coordinates) == 0 {
 		return c.Status(http.StatusNotFound).JSON(fiber.Map{
 			"error": "no coordinates found for given city/country",
 		})
 	}
-
+	
 	// Fetch leads & return
 	leads, leadsStatus, err := lib.GetLeads(
 		coordinates[0].Lat, coordinates[0].Lon, body.BusinessType, body.CountryCode, body.Limit,
