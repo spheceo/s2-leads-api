@@ -22,6 +22,12 @@ type ReviewsInput struct {
 	Limit      int64  `json:"limit" validate:"omitempty,gte=1"`
 }
 
+type leadSearchResult struct {
+	leads  lib.LeadsOutput
+	status int
+	err    error
+}
+
 func index(c fiber.Ctx) error {
 	return c.JSON(&fiber.Map{
 		"message": "Welcome to the s2-leads-api!",
@@ -60,17 +66,42 @@ func search(c fiber.Ctx) error {
 		})
 	}
 
-	// Fetch leads & return
-	leads, leadsStatus, err := lib.GetLeads(
-		coordinates[0].Lat, coordinates[0].Lon, body.BusinessType, body.CountryCode, body.Limit,
-	)
-	if err != nil {
-		return c.Status(leadsStatus).JSON(fiber.Map{
-			"error": err.Error(),
+	// Fetch leads for each coordinate concurrently.
+	results := make(chan leadSearchResult, len(coordinates))
+	for _, coordinate := range coordinates {
+		go func(lat, lon string) {
+			leads, status, err := lib.GetLeads(
+				lat, lon, body.BusinessType, body.CountryCode, body.Limit,
+			)
+			results <- leadSearchResult{leads: leads, status: status, err: err}
+		}(coordinate.Lat, coordinate.Lon)
+	}
+
+	merged := lib.LeadsOutput{}
+	var firstErr error
+	errorStatus := http.StatusBadGateway
+
+	for range coordinates {
+		result := <-results
+		if result.err != nil {
+			if firstErr == nil {
+				firstErr = result.err
+				errorStatus = result.status
+			}
+			continue
+		}
+
+		merged.Data = append(merged.Data, result.leads.Data...)
+	}
+
+	merged.Total = len(merged.Data)
+	if merged.Total == 0 && firstErr != nil {
+		return c.Status(errorStatus).JSON(fiber.Map{
+			"error": firstErr.Error(),
 		})
 	}
 
-	return c.Status(leadsStatus).JSON(leads)
+	return c.Status(http.StatusOK).JSON(merged)
 }
 
 func reviews(c fiber.Ctx) error {

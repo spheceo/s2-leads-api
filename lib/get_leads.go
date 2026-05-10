@@ -98,6 +98,18 @@ func GetReviews(businessID string, limit int64) (ReviewsOutput, int, error) {
 		return ReviewsOutput{}, http.StatusInternalServerError, err
 	}
 
+	body, status, err := fetchReviews(httpClient, rapidapi, businessID, limit)
+	if err != nil {
+		return ReviewsOutput{}, status, err
+	}
+	if body.Total > 0 {
+		return body, status, nil
+	}
+
+	return fetchReviews(httpClient, rapidapi, businessID, limit)
+}
+
+func fetchReviews(httpClient *http.Client, rapidapi, businessID string, limit int64) (ReviewsOutput, int, error) {
 	endpoint := fmt.Sprintf(
 		"https://maps-data.p.rapidapi.com/reviews.php?business_id=%s&lang=en&limit=%d&sort=Newest",
 		url.QueryEscape(businessID), limit,
@@ -156,12 +168,12 @@ func GetReviews(businessID string, limit int64) (ReviewsOutput, int, error) {
 		})
 	}
 
-	body := ReviewsOutput{
+	reviewsOutput := ReviewsOutput{
 		Total: len(reviews),
 		Data:  reviews,
 	}
 
-	return body, status, nil
+	return reviewsOutput, status, nil
 }
 
 func calculateLeadScore(rating float64, reviews int64) float64 {

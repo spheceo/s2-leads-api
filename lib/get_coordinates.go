@@ -17,7 +17,7 @@ func GetCoordinates(city, country_code string) (CoordinateUpstreamInput, int, er
 
 	// Build the OpenStreetMap endpoint for the requested search input.
 	endpoint := fmt.Sprintf(
-		"https://nominatim.openstreetmap.org/search?q=%s&format=json&limit=1&countrycodes=%s",
+		"https://nominatim.openstreetmap.org/search?q=%s&format=json&limit=3&countrycodes=%s",
 		url.QueryEscape(city), url.QueryEscape(country_code),
 	)
 
