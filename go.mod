@@ -6,6 +6,7 @@ require (
 	github.com/go-playground/validator/v10 v10.30.1
 	github.com/gofiber/fiber/v3 v3.0.0
 	github.com/joho/godotenv v1.5.1
+	github.com/unkeyed/sdks/api/go/v2 v2.6.0
 )
 
 require (
@@ -23,7 +24,6 @@ require (
 	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/spyzhov/ajson v0.8.0 // indirect
 	github.com/tinylib/msgp v1.6.3 // indirect
-	github.com/unkeyed/sdks/api/go/v2 v2.6.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.69.0 // indirect
 	golang.org/x/crypto v0.47.0 // indirect

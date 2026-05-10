@@ -17,6 +17,11 @@ type SearchInput struct {
 	Limit        int64  `json:"limit" validate:"required,gte=1,lte=500"`
 }
 
+type ReviewsInput struct {
+	BusinessID string `json:"business_id" validate:"required,min=2"`
+	Limit      int64  `json:"limit" validate:"omitempty,gte=1"`
+}
+
 func index(c fiber.Ctx) error {
 	return c.JSON(&fiber.Map{
 		"message": "Welcome to the s2-leads-api!",
@@ -68,6 +73,36 @@ func search(c fiber.Ctx) error {
 	return c.Status(leadsStatus).JSON(leads)
 }
 
+func reviews(c fiber.Ctx) error {
+	var body ReviewsInput
+
+	if err := c.Bind().Body(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": "invalid JSON body",
+		})
+	}
+
+	if err := validator.New().Struct(body); err != nil {
+		return c.Status(422).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	limit := body.Limit
+	if limit == 0 {
+		limit = 1000
+	}
+
+	reviews, reviewsStatus, err := lib.GetReviews(body.BusinessID, limit)
+	if err != nil {
+		return c.Status(reviewsStatus).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.Status(reviewsStatus).JSON(reviews)
+}
+
 func test(c fiber.Ctx) error {
 	body, status, err := lib.GetIP()
 	if err != nil {
@@ -93,6 +128,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	// Define Routes
 	app.Get("/", index)
 	app.Post("/search", lib.UnkeyAuth, search)
+	app.Post("/reviews", lib.UnkeyAuth, reviews)
 	app.Get("/getIP", test)
 	app.Get("/favicon.ico", favicon)
 
