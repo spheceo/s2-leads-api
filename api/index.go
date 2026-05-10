@@ -14,7 +14,7 @@ type SearchInput struct {
 	BusinessType string `json:"business_type" validate:"required,min=2"`
 	City         string `json:"city" validate:"required,min=2"`
 	CountryCode  string `json:"country_code" validate:"required,min=2"`
-	Limit        int64  `json:"limit" validate:"required,gte=1,lte=500"`
+	Limit        int64  `json:"limit" validate:"omitempty,gte=1,lte=500"`
 }
 
 type ReviewsInput struct {
@@ -66,12 +66,17 @@ func search(c fiber.Ctx) error {
 		})
 	}
 
+	limit := body.Limit
+	if limit == 0 {
+		limit = 1000
+	}
+
 	// Fetch leads for each coordinate concurrently.
 	results := make(chan leadSearchResult, len(coordinates))
 	for _, coordinate := range coordinates {
 		go func(lat, lon string) {
 			leads, status, err := lib.GetLeads(
-				lat, lon, body.BusinessType, body.CountryCode, body.Limit,
+				lat, lon, body.BusinessType, body.CountryCode, limit,
 			)
 			results <- leadSearchResult{leads: leads, status: status, err: err}
 		}(coordinate.Lat, coordinate.Lon)

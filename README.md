@@ -27,7 +27,7 @@ Fetches lead data for a business type in a city/country.
 - `business_type` (string, required): Search keyword/category, e.g. `dentist`, `plumber`, `restaurant`.
 - `city` (string, required): City to search in.
 - `country_code` (string, required): 2-letter country code, e.g. `us`, `za`, `gb`.
-- `limit` (number, required): Number of results to request (1 to 500).
+- `limit` (number, optional): Number of results to request. Defaults to 1000 when omitted.
 
 ## ENV
 
