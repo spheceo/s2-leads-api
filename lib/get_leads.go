@@ -22,6 +22,22 @@ func GetLeads(lat, lon, business_type, country_code string, limit int64) (LeadsO
 		return LeadsOutput{}, http.StatusInternalServerError, err
 	}
 
+	var lastStatus int
+	var lastErr error
+	for attempt := 0; attempt < 2; attempt++ {
+		body, status, err := fetchLeads(httpClient, rapidapi, lat, lon, business_type, country_code, limit)
+		if err == nil {
+			return body, status, nil
+		}
+
+		lastStatus = status
+		lastErr = err
+	}
+
+	return LeadsOutput{}, lastStatus, lastErr
+}
+
+func fetchLeads(httpClient *http.Client, rapidapi, lat, lon, business_type, country_code string, limit int64) (LeadsOutput, int, error) {
 	endpoint := fmt.Sprintf(
 		"https://maps-data.p.rapidapi.com/searchmaps.php?query=%s&limit=%d&country=%s&lang=en&offset=0&zoom=10&lat=%s&lng=%s",
 		url.QueryEscape(business_type), limit, country_code, lat, lon,
@@ -98,15 +114,23 @@ func GetReviews(businessID string, limit int64) (ReviewsOutput, int, error) {
 		return ReviewsOutput{}, http.StatusInternalServerError, err
 	}
 
-	body, status, err := fetchReviews(httpClient, rapidapi, businessID, limit)
-	if err != nil {
-		return ReviewsOutput{}, status, err
-	}
-	if body.Total > 0 {
-		return body, status, nil
+	var lastStatus int
+	var lastErr error
+	for attempt := 0; attempt < 2; attempt++ {
+		body, status, err := fetchReviews(httpClient, rapidapi, businessID, limit)
+		if err != nil {
+			lastStatus = status
+			lastErr = err
+			continue
+		}
+		if body.Total > 0 {
+			return body, status, nil
+		}
+
+		lastStatus = status
 	}
 
-	return fetchReviews(httpClient, rapidapi, businessID, limit)
+	return ReviewsOutput{}, lastStatus, lastErr
 }
 
 func fetchReviews(httpClient *http.Client, rapidapi, businessID string, limit int64) (ReviewsOutput, int, error) {
